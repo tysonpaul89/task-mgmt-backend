@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"slices"
@@ -21,8 +20,8 @@ var tasks []Task
 func main() {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/tasks", handleTasksHandler).Methods(http.MethodGet, http.MethodPost)
-	r.HandleFunc("/tasks/{id}", handleTaskById).Methods(http.MethodGet, http.MethodPut, http.MethodDelete)
+	r.HandleFunc("/tasks", handleTasksHandler).Methods(http.MethodGet, http.MethodPost, http.MethodOptions)
+	r.HandleFunc("/tasks/{id}", handleTaskById).Methods(http.MethodGet, http.MethodPut, http.MethodDelete, http.MethodOptions)
 	r.Use(mux.CORSMethodMiddleware(r))
 
 	http.ListenAndServe(":8080", r)
@@ -31,6 +30,9 @@ func main() {
 // To handle GET /tasks and POST /tasks request
 func handleTasksHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
+	if r.Method == http.MethodOptions {
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 
 	var data []byte
@@ -77,6 +79,9 @@ func handleTasksHandler(w http.ResponseWriter, r *http.Request) {
 
 func handleTaskById(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
+	if r.Method == http.MethodOptions {
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	var data []byte
 	var err error
@@ -123,8 +128,7 @@ func handleTaskById(w http.ResponseWriter, r *http.Request) {
 		tasks = slices.DeleteFunc(tasks, func(item Task) bool {
 			return item.Id == task_id
 		})
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(fmt.Sprintf("%s deleted successfully", task_id)))
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 
